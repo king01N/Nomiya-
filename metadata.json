@@ -1,0 +1,11 @@
+{
+  "name": "Nomiya 🦋",
+  "description": "Private, warm, and natural chat with Nomiya 🦋.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
