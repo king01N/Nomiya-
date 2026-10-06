@@ -7,6 +7,7 @@ import {
   Send,
   Square,
   Loader2,
+  Gift,
 } from 'lucide-react';
 
 interface ComposerProps {
@@ -19,6 +20,8 @@ interface ComposerProps {
   onToggleVoiceInput: () => void;
   isListening: boolean;
   disabled?: boolean;
+  isAdLocked?: boolean;
+  onClaimAd?: () => void;
 }
 
 export const Composer: React.FC<ComposerProps> = ({
@@ -31,6 +34,8 @@ export const Composer: React.FC<ComposerProps> = ({
   onToggleVoiceInput,
   isListening,
   disabled = false,
+  isAdLocked = false,
+  onClaimAd,
 }) => {
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
@@ -48,6 +53,10 @@ export const Composer: React.FC<ComposerProps> = ({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      if (isAdLocked) {
+        onClaimAd?.();
+        return;
+      }
       if (text.trim() && !disabled) {
         onSendText();
       }
@@ -72,13 +81,27 @@ export const Composer: React.FC<ComposerProps> = ({
             Done
           </button>
         </div>
+      ) : isAdLocked ? (
+        /* Locked Bar - Click to Claim */
+        <div
+          onClick={onClaimAd}
+          className="flex-1 flex items-center justify-between rounded-3xl px-4 py-2.5 shadow-sm bg-gradient-to-r from-[#3b0b45] to-[#2a0531] border border-pink-500/50 cursor-pointer active:scale-[0.99] transition-transform"
+        >
+          <div className="flex items-center gap-2 text-xs text-pink-200 truncate">
+            <Gift className="w-4 h-4 text-pink-400 flex-shrink-0 animate-bounce" />
+            <span className="font-medium">Ad dekh kar 1 ghanta chat unlock karein</span>
+          </div>
+          <span className="text-[11px] font-bold text-pink-400 bg-pink-500/20 px-2 py-0.5 rounded-full flex-shrink-0">
+            Claim 🎁
+          </span>
+        </div>
       ) : (
         /* Main Input Capsule */
         <div className="flex-1 flex items-end rounded-3xl px-2 py-1 shadow-sm bg-[#310839] border border-purple-800/40 focus-within:border-pink-500/80 focus-within:shadow-[0_0_12px_rgba(255,42,133,0.2)]">
           {/* Sticker / Emoji button */}
           <button
             onClick={onOpenStickers}
-            className="p-2 active:scale-90 transition-transform rounded-full flex-shrink-0 text-pink-300 hover:text-pink-100"
+            className="p-2 active:scale-90 transition-transform rounded-full flex-shrink-0 text-pink-300 hover:text-pink-100 cursor-pointer"
             title="Stickers & Emojis"
             type="button"
           >
@@ -99,7 +122,7 @@ export const Composer: React.FC<ComposerProps> = ({
           {/* Attachment button */}
           <button
             onClick={onOpenAttachment}
-            className="p-2 active:scale-90 transition-transform rounded-full flex-shrink-0 text-pink-300 hover:text-pink-100"
+            className="p-2 active:scale-90 transition-transform rounded-full flex-shrink-0 text-pink-300 hover:text-pink-100 cursor-pointer"
             title="Attach photo"
             type="button"
           >
@@ -110,7 +133,7 @@ export const Composer: React.FC<ComposerProps> = ({
           {!hasContent && (
             <button
               onClick={onOpenCamera}
-              className="p-2 active:scale-90 transition-transform rounded-full flex-shrink-0 text-pink-300 hover:text-pink-100"
+              className="p-2 active:scale-90 transition-transform rounded-full flex-shrink-0 text-pink-300 hover:text-pink-100 cursor-pointer"
               title="Camera"
               type="button"
             >
@@ -120,12 +143,21 @@ export const Composer: React.FC<ComposerProps> = ({
         </div>
       )}
 
-      {/* Floating Action Button (Mic or Send) */}
-      {hasContent ? (
+      {/* Floating Action Button (Mic or Send or Gift Claim) */}
+      {isAdLocked ? (
+        <button
+          onClick={onClaimAd}
+          className="w-11 h-11 flex-shrink-0 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-95 bg-gradient-to-r from-pink-500 to-rose-500 shadow-[0_0_15px_rgba(255,42,133,0.4)] cursor-pointer"
+          title="Watch Ad & Claim 1 Hour Chat"
+          type="button"
+        >
+          <Gift className="w-5 h-5" />
+        </button>
+      ) : hasContent ? (
         <button
           onClick={onSendText}
           disabled={disabled || !text.trim()}
-          className="w-11 h-11 flex-shrink-0 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-95 disabled:opacity-70 bg-gradient-to-r from-[#ff2a85] to-[#f41872] shadow-[0_0_15px_rgba(255,42,133,0.4)]"
+          className="w-11 h-11 flex-shrink-0 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-95 disabled:opacity-70 bg-gradient-to-r from-[#ff2a85] to-[#f41872] shadow-[0_0_15px_rgba(255,42,133,0.4)] cursor-pointer"
           title="Send message"
           type="button"
         >
@@ -138,7 +170,7 @@ export const Composer: React.FC<ComposerProps> = ({
       ) : (
         <button
           onClick={onToggleVoiceInput}
-          className={`w-11 h-11 flex-shrink-0 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-95 ${
+          className={`w-11 h-11 flex-shrink-0 rounded-full text-white flex items-center justify-center shadow-md transition-all active:scale-95 cursor-pointer ${
             isListening
               ? 'bg-pink-600 animate-pulse shadow-[0_0_15px_rgba(236,72,153,0.5)]'
               : 'bg-gradient-to-r from-[#ff2a85] to-[#f41872] shadow-[0_0_12px_rgba(255,42,133,0.35)]'

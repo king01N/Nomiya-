@@ -124,19 +124,19 @@ async function generateContentWithFallback(options: {
   systemInstruction?: string;
   preferredModel?: string;
 }): Promise<string> {
-  // Use models with high free-tier limits first
+  // Use models with active free-tier limits (gemini-3.8-flash & gemini-3.1-flash-lite)
   const preferred =
     options.preferredModel &&
-    options.preferredModel !== 'gemini-3.8-flash' &&
-    options.preferredModel !== 'gemini-flash-latest'
+    options.preferredModel !== 'gemini-3.1-pro-preview' &&
+    options.preferredModel !== 'gemini-3.1-pro'
       ? options.preferredModel
-      : 'gemini-3.1-flash-lite';
+      : 'gemini-3.8-flash';
 
   const candidateModels = [
     preferred,
-    'gemini-3.1-flash-lite',
-    'gemini-3.1-pro-preview',
     'gemini-3.8-flash',
+    'gemini-3.1-flash-lite',
+    'gemini-flash-latest',
   ];
 
   // Unique model list

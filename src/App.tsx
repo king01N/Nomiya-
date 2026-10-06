@@ -45,6 +45,37 @@ export const App: React.FC = () => {
   const [activeFullImage, setActiveFullImage] = useState<string | null>(null);
   const [pendingFeatureNotice, setPendingFeatureNotice] = useState<string | null>(null);
 
+  // Adsterra Direct Link Ads
+  const ADSTERRA_DIRECT_LINK =
+    'https://www.profitableratecpmnetwork.com/gr7csb4u3w?key=6425e3403dad24184365c74969ce6e0d';
+
+  // Adsterra Free 4 Messages & Unlimited 1-Hour Claim State
+  const [isChatUnlocked, setIsChatUnlocked] = useState<boolean>(() =>
+    storageService.isChatUnlocked()
+  );
+
+  // Periodic check (every 10 seconds) to detect when 1-hour session finishes
+  useEffect(() => {
+    const checkInterval = setInterval(() => {
+      setIsChatUnlocked(storageService.isChatUnlocked());
+    }, 10000);
+    return () => clearInterval(checkInterval);
+  }, []);
+
+  const handleClaimAd = () => {
+    try {
+      window.open(ADSTERRA_DIRECT_LINK, '_blank', 'noopener,noreferrer');
+    } catch {
+      window.location.href = ADSTERRA_DIRECT_LINK;
+    }
+    // Unlock for 1 hour (User can claim unlimited times every day!)
+    storageService.setAdUnlockedForOneHour();
+    setIsChatUnlocked(true);
+    if (settings.soundEnabled) {
+      soundService.playReceiveSound();
+    }
+  };
+
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
   // Track consecutive unreplied proactive messages (max 3, then stops completely)
   const consecutiveNudgeCountRef = useRef<number>(0);
@@ -216,8 +247,19 @@ export const App: React.FC = () => {
       if (!text || isTyping) return;
 
       // User replied, reset consecutive proactive nudge counter to 0!
+      // Check ad lock
+      if (!storageService.isChatUnlocked()) {
+        setIsChatUnlocked(false);
+        return;
+      }
+
       consecutiveNudgeCountRef.current = 0;
       resetIdleTimer();
+
+      // Consume one free message if still in free tier
+      if (storageService.getAdFreeMessagesCount() < 4) {
+        storageService.incrementAdFreeMessagesCount();
+      }
 
       const userMsgId = `user-${Date.now()}`;
       const userMessage: ChatMessage = {
@@ -270,6 +312,9 @@ export const App: React.FC = () => {
 
         // Deliver multi-bubble responses (1, 2, or 3 bubbles)
         await deliverAiBubbles(bubbles, imageUrl, reply);
+
+        // Update ad lock status after turn
+        setIsChatUnlocked(storageService.isChatUnlocked());
       } catch (err: any) {
         console.error('Error generating reply:', err);
         setErrorMessage(
@@ -292,8 +337,20 @@ export const App: React.FC = () => {
   const handleSendImage = async (caption: string) => {
     if (!activePreviewImage) return;
 
+    // Check ad lock
+    if (!storageService.isChatUnlocked()) {
+      setIsChatUnlocked(false);
+      return;
+    }
+
     consecutiveNudgeCountRef.current = 0;
     resetIdleTimer();
+
+    // Consume one free message if still in free tier
+    if (storageService.getAdFreeMessagesCount() < 4) {
+      storageService.incrementAdFreeMessagesCount();
+    }
+
     const imageBase64 = activePreviewImage;
     const userMsgId = `img-${Date.now()}`;
 
@@ -347,6 +404,7 @@ export const App: React.FC = () => {
 
       hasSkippedLastReplyRef.current = false;
       await deliverAiBubbles(bubbles, imageUrl, reply);
+      setIsChatUnlocked(storageService.isChatUnlocked());
     } catch (err: any) {
       console.error('Image chat error:', err);
       setErrorMessage(
@@ -364,8 +422,20 @@ export const App: React.FC = () => {
 
   // Send Sticker
   const handleSelectSticker = async (sticker: StickerItem) => {
+    // Check ad lock
+    if (!storageService.isChatUnlocked()) {
+      setIsChatUnlocked(false);
+      return;
+    }
+
     consecutiveNudgeCountRef.current = 0;
     resetIdleTimer();
+
+    // Consume one free message if still in free tier
+    if (storageService.getAdFreeMessagesCount() < 4) {
+      storageService.incrementAdFreeMessagesCount();
+    }
+
     const userMsgId = `sticker-${Date.now()}`;
     const userMessage: ChatMessage = {
       id: userMsgId,
@@ -412,6 +482,7 @@ export const App: React.FC = () => {
 
       hasSkippedLastReplyRef.current = false;
       await deliverAiBubbles(bubbles, imageUrl, reply);
+      setIsChatUnlocked(storageService.isChatUnlocked());
     } catch (err: any) {
       console.error('Sticker chat error:', err);
       setErrorMessage('Could not send sticker reaction.');
@@ -536,6 +607,8 @@ export const App: React.FC = () => {
           onStarterClick={(starter) => handleSendMessage(starter)}
           onRetryMessage={handleRetryMessage}
           onImageClick={(url) => setActiveFullImage(url)}
+          isAdLocked={!isChatUnlocked}
+          onClaimAd={handleClaimAd}
         />
 
         {/* Bottom Composer */}
@@ -549,6 +622,8 @@ export const App: React.FC = () => {
           onToggleVoiceInput={handleToggleVoiceInput}
           isListening={isListening}
           disabled={isTyping}
+          isAdLocked={!isChatUnlocked}
+          onClaimAd={handleClaimAd}
         />
 
         {/* Three-Dot Menu */}

@@ -116,4 +116,83 @@ export const storageService = {
       return 1;
     }
   },
+
+  // Adsterra Social Link Free Tier & 1-Hour Unlimited Claim with Daily Reset
+  getTodayDateString(): string {
+    return new Date().toISOString().slice(0, 10);
+  },
+
+  checkAndResetDailyQuota(): void {
+    try {
+      const today = this.getTodayDateString();
+      const lastDate = localStorage.getItem('nomiya_ad_last_active_date_v1');
+      if (lastDate !== today) {
+        // New calendar day! Reset daily free messages to 0
+        localStorage.setItem('nomiya_ad_last_active_date_v1', today);
+        localStorage.setItem('nomiya_ad_free_count_v1', '0');
+        // If yesterday's 1-hour session has expired, clean it up
+        const expiry = parseInt(localStorage.getItem('nomiya_ad_unlocked_until_v1') || '0', 10);
+        if (Date.now() > expiry) {
+          localStorage.removeItem('nomiya_ad_unlocked_until_v1');
+        }
+      }
+    } catch (e) {
+      console.error('Failed to check daily quota', e);
+    }
+  },
+
+  getAdFreeMessagesCount(): number {
+    this.checkAndResetDailyQuota();
+    try {
+      const val = localStorage.getItem('nomiya_ad_free_count_v1');
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  },
+
+  incrementAdFreeMessagesCount(): number {
+    this.checkAndResetDailyQuota();
+    try {
+      const current = this.getAdFreeMessagesCount() + 1;
+      localStorage.setItem('nomiya_ad_free_count_v1', current.toString());
+      return current;
+    } catch {
+      return 1;
+    }
+  },
+
+  getAdUnlockedUntil(): number {
+    this.checkAndResetDailyQuota();
+    try {
+      const val = localStorage.getItem('nomiya_ad_unlocked_until_v1');
+      return val ? parseInt(val, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  },
+
+  setAdUnlockedForOneHour(): number {
+    this.checkAndResetDailyQuota();
+    try {
+      // 1 hour in ms = 60 * 60 * 1000 = 3600000 ms
+      const expiry = Date.now() + 60 * 60 * 1000;
+      localStorage.setItem('nomiya_ad_unlocked_until_v1', expiry.toString());
+      return expiry;
+    } catch {
+      return Date.now() + 60 * 60 * 1000;
+    }
+  },
+
+  isChatUnlocked(): boolean {
+    this.checkAndResetDailyQuota();
+    // 1. Initial 4 messages are free everyday for the user
+    const freeCount = this.getAdFreeMessagesCount();
+    if (freeCount < 4) {
+      return true;
+    }
+    // 2. Beyond 4 messages, check if active 1-hour session is valid
+    const unlockedUntil = this.getAdUnlockedUntil();
+    return Date.now() < unlockedUntil;
+  },
 };

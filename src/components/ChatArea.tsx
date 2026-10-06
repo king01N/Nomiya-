@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ChatMessage } from '../types';
 import { MessageItem } from './MessageItem';
-import { Sparkles, MessageCircleHeart, Heart } from 'lucide-react';
+import { Sparkles, MessageCircleHeart, Heart, Gift } from 'lucide-react';
 
 interface ChatAreaProps {
   messages: ChatMessage[];
@@ -11,6 +11,8 @@ interface ChatAreaProps {
   onStarterClick: (starterText: string) => void;
   onRetryMessage: (message: ChatMessage) => void;
   onImageClick: (imageUrl: string) => void;
+  isAdLocked?: boolean;
+  onClaimAd?: () => void;
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -21,6 +23,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   onStarterClick,
   onRetryMessage,
   onImageClick,
+  isAdLocked = false,
+  onClaimAd,
 }) => {
   const bottomRef = useRef<HTMLDivElement | null>(null);
 
@@ -129,6 +133,28 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
               <span className="w-2 h-2 rounded-full bg-pink-400 animate-bounce [animation-delay:-0.15s]"></span>
               <span className="w-2 h-2 rounded-full bg-pink-400 animate-bounce"></span>
             </div>
+          </div>
+        )}
+
+        {/* In-Chat Adsterra Claim Card (Appears only when limit reached, vanishes on claim) */}
+        {isAdLocked && (
+          <div className="my-4 mx-auto max-w-sm rounded-2xl bg-gradient-to-br from-[#3b0b45] to-[#26052c] border border-pink-500/40 p-4 text-center shadow-xl backdrop-blur-md animate-fadeIn">
+            <div className="w-10 h-10 mx-auto mb-2.5 rounded-full bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-300">
+              <Gift className="w-5 h-5 text-pink-400" />
+            </div>
+            <p className="text-sm font-bold text-white mb-1">
+              Free Messages Limit Reached 💕
+            </p>
+            <p className="text-xs text-pink-200/90 mb-3.5 leading-relaxed">
+              Agle 1 ghante tak continue chat karne ke liye ad dekhein!
+            </p>
+            <button
+              onClick={onClaimAd}
+              className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold text-xs shadow-md shadow-pink-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <Sparkles className="w-4 h-4 text-yellow-300 animate-pulse" />
+              <span>Watch Ad & Claim 1 Hour Chat 🎁</span>
+            </button>
           </div>
         )}
 

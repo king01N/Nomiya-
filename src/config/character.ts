@@ -42,7 +42,7 @@ export const CHARACTER_PERSONALITY = `
 /**
  * Gemini model to use for chat generations.
  */
-export const GEMINI_MODEL = 'gemini-3.1-flash-lite';
+export const GEMINI_MODEL = 'gemini-3.8-flash';
 
 /**
  * System instruction provided to Gemini for persona consistency.
